@@ -23,6 +23,7 @@ vim.api.nvim_set_hl(0, "Visual", {bg = "#505050", fg = none})
 vim.api.nvim_set_hl(0, "Search", { bg = "Green", fg = "White" })
 
 
+local bufopts = { noremap=true, silent=true, buffer=bufnr }
 
 -- Key Maps
 vim.g.mapleader = ' ' -- map the leader
@@ -31,6 +32,11 @@ vim.g.maplocalleader = ' ' -- map the local leader
 -- CHADtree keys
 vim.keymap.set('n', '<leader>E', '<cmd>CHADopen --always-focus<CR>', { desc = 'Open CHADtree window' })
 vim.keymap.set('n', '<leader>e', '<cmd>CHADopen<CR>', { desc = 'Toggle CHADtree window' })
+
+-- Telescope keys
+vim.keymap.set('n', '<leader>f', '<cmd>Telescope find_files<CR>', { desc = 'Find files with telescope' })
+vim.keymap.set('n', '<leader>g', '<cmd>Telescope live_grep<CR>', { desc = 'Live grep with telescope' })
+vim.keymap.set('n', '<leader>c', '<cmd>Telescope commands<CR>', { desc = 'List ccmmands with telescope' })
 
 -- The current quick help window
 -- Learning to work with CHADtree so it is the CHADhelp binding
@@ -62,10 +68,17 @@ local on_attach = function(client, bufnr)
         })
       end,
     })
+    vim.lsp.completion.enable(true, client.id, bufnr, {
+      autotrigger = false,
+      convert = function(item)
+        return { abbr = item.label:gsub('%b()', '') }
+      end,
+    })
   end
 
+  -- autocomplete false
+
   -- Recommended keymaps for LSP actions (customize as needed)
-  local bufopts = { noremap=true, silent=true, buffer=bufnr }
   vim.keymap.set('n', 'gD', vim.lsp.buf.declaration, bufopts)
   vim.keymap.set('n', 'gd', vim.lsp.buf.definition, bufopts)
   vim.keymap.set('n', 'K', vim.lsp.buf.hover, bufopts)
@@ -74,14 +87,58 @@ local on_attach = function(client, bufnr)
   vim.keymap.set('n', '<leader>rn', vim.lsp.buf.rename, bufopts)
   vim.keymap.set('n', '<leader>ca', vim.lsp.buf.code_action, bufopts)
   vim.keymap.set('n', 'gr', vim.lsp.buf.references, bufopts)
+  -- toggle inlay_hint
+  vim.keymap.set('n', '<leader>q', function()
+    vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled())
+  end)
 end
 
+vim.keymap.set('i', '<c-space>', function()
+  vim.lsp.completion.get()
+end)
 -- Configure gopls
 
 vim.lsp.config('gopls', {
   cmd = { '/home/daniel/go/bin/gopls' }, 
+  completeUnimported = true,
 })
 
+
+-- gopls settings
+
+local gopls_settings = {
+  gopls = {
+    buildFlags = {},
+--    env = {},
+    directoryFilters = {},
+    analyses = {
+      unusedparms = true,
+      unreachable = true,
+      staticcheck = true,
+      shadow = true,
+    },
+    gofumpt = true,
+    usePlaceholders = true,
+    completeUnimported = true,
+    deepCompletion = true,
+    matcher = "Fuzzy",
+    diagnosticsDelay = "250ms",
+    hints = {
+      rangeVariableTypes = true,
+      parameterNames = true,
+      constantValues = true,
+      assignVariableTypes = true,
+      compositeLiteralFields = true,
+      compositeLiteralTypes = true,
+      functionTypeParameters = true,
+    },
+    completeUnimported = true,
+    usePlaceholders = true,
+    analyses = {
+      unusedparams = true,
+    },
+  },
+}
 
 -- Autocmd to start gopls for Go files
 vim.api.nvim_create_autocmd("FileType", {
@@ -98,6 +155,7 @@ vim.api.nvim_create_autocmd("FileType", {
         vim.lsp.start({
             name = "gopls",
             cmd = { "/home/daniel/go/bin/gopls" },
+            settings = gopls_settings,
             completeUnimported = true,
             root_dir = find_go_mod, -- Use the custom function here
             on_attach = on_attach,
@@ -137,3 +195,10 @@ vim.diagnostic.config({
         end,
     },
 })
+
+-- Telescope
+-- local builtin = require('telescope.builtin')
+-- vim.keymap.set('n', '<leader>ff', builtin.find_files, { desc = 'Telescope find files' })
+-- vim.keymap.set('n', '<leader>fg', builtin.live_grep, { desc = 'Telescope live grep' })
+-- vim.keymap.set('n', '<leader>fb', builtin.buffers, { desc = 'Telescope buffers' })
+-- vim.keymap.set('n', '<leader>fh', builtin.help_tags, { desc = 'Telescope help tags' })
