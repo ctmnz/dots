@@ -14,7 +14,21 @@
   boot.kernelPackages = pkgs.linuxPackages_latest;
   boot.kernelModules = [ "kvm-intel" "ntsync"];
   boot.extraModulePackages = [ ];
+  boot.kernelParams = [ "btusb.enable_autosuspend=n" ];
 
+  # Bootloader.
+  boot.loader.systemd-boot.enable = true;
+  boot.loader.efi.canTouchEfiVariables = true;
+
+  boot.extraModprobeConfig = "options kvm_intel nested=1";
+
+  boot.initrd.systemd.enable = false;
+  virtualisation.xen = {
+    enable = false;
+  };
+
+#  boot.kernelPackages = pkgs.linuxPackages_latest;
+#  boot.initrd.kernelModules = ["ntsync"];
 
 
 
@@ -56,23 +70,34 @@
 
   hardware.nvidia.powerManagement.enable = false;
   hardware.nvidia.powerManagement.finegrained = false;
+  # hardware.nvidia.open = true;
   hardware.nvidia.open = true;
   hardware.nvidia.nvidiaSettings = true;
-  hardware.nvidia.package = config.boot.kernelPackages.nvidiaPackages.latest;
-#  hardware.nvidia = {
+#  hardware.nvidia.package = config.boot.kernelPackages.nvidiaPackages.latest;
+  hardware.nvidia.package = config.boot.kernelPackages.nvidiaPackages.production;
+#  hardware.nvidia.package = config.boot.kernelPackages.nvidiaPackages.beta;
 #    package = config.boot.kernelPackages.nvidiaPackages.mkDriver {
-#      version = "580.76.05";
-#      sha256_64bit = "sha256-IZvmNrYJMbAhsujB4O/4hzY8cx+KlAyqh7zAVNBdl/0=";
+      # version = "580.76.05";
+      # sha256_64bit = "sha256-VbkVaKwElaazojfxkHnz/nN/5olk13ezkw/EQjhKPms=";
 #      sha256_aarch64 = "sha256-NL2DswzVWQQMVM092NmfImqKbTk9VRgLL8xf4QEvGAQ=";
 #      openSha256 = "sha256-xEPJ9nskN1kISnSbfBigVaO6Mw03wyHebqQOQmUg/eQ=";
 #      settingsSha256 = "sha256-ll7HD7dVPHKUyp5+zvLeNqAb6hCpxfwuSyi+SAXapoQ=";
 #      persistencedSha256 = "sha256-bs3bUi8LgBu05uTzpn2ugcNYgR5rzWEPaTlgm0TIpHY=";
 #    };
 #  };
-  hardware = {
-    opengl.enable = true;
-  };
+#  hardware = {
+#    opengl.enable = true;
+#  };
   
-
+hardware.bluetooth = {
+    enable = true;
+    powerOnBoot = true; # Keeps it powered on after boot/resume
+    settings = {
+      General = {
+        FastConnectable = "true";
+        JustWorksRepairing = "always";
+      };
+    };
+  };
 
 }
