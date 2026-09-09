@@ -76,7 +76,6 @@ vim.api.nvim_create_autocmd("LspAttach", {
   end,
 })
 
-vim.lsp.enable('pylsp')
 
 
 vim.pack.add({
@@ -98,17 +97,16 @@ local lsp_servers = {
     Lua = { workspace = { library = vim.api.nvim_get_runtime_file("lua", true) }, },
   },
   gopls = {},
+  pyright = {},
 }
 
 vim.pack.add({
   "https://github.com/neovim/nvim-lspconfig", -- default configs for lsps
-
-  -- NOTE: if you'd rather install the lsps through your OS package manager you
-  -- can delete the next three mason-related lines and their setup calls below.
-  -- see `:h lsp-quickstart` for more details.
   "https://github.com/mason-org/mason.nvim",                     -- package manager
   "https://github.com/mason-org/mason-lspconfig.nvim",           -- lspconfig bridge
-  "https://github.com/WhoIsSethDaniel/mason-tool-installer.nvim" -- auto installer
+  "https://github.com/WhoIsSethDaniel/mason-tool-installer.nvim", -- auto installer
+  "https://github.com/nvim-tree/nvim-web-devicons",
+  "https://github.com/chrisgrieser/nvim-origami",
 }, { confirm = false })
 
 require("mason").setup()
@@ -135,9 +133,63 @@ for server, config in pairs(lsp_servers) do
   })
 end
 
-require('lspconfig').pylsp.setup {
-  cmd = pylsp, -- 'pylsp' is seen as an undefined variable (nil)
-}
+
+-- vim.lsp.enable('pylsp')
+-- require('lspconfig').pylsp.setup {
+--   cmd = pylsp, -- 'pylsp' is seen as an undefined variable (nil)
+-- }
+-- 
+
+-- vim.lsp.enable('pyright')
+-- require('lspconfig').pyright.setup {
+--   cmd = {'pyright-langserver', '--stdio'}, 
+--   settings = {
+--         python = {
+--           analysis = {
+--             autoSearchPaths = true,
+--             useLibraryCodeForTypes = true,
+--             diagnosticMode = 'openFilesOnly',
+--           },
+--       },
+--   },
+-- }
+
+-- 1. Setup Pyright for Type Checking
+vim.lsp.enable('pyright')
+require('lspconfig').pyright.setup({
+  settings = {
+    python = {
+      analysis = {
+        typeCheckingMode = "standard", -- Use "strict" if you want aggressive type checking
+        autoSearchPaths = true,
+        useLibraryCodeForTypes = true,
+        diagnosticMode = "workspace",
+      }
+    }
+  },
+  -- Optional: Disable Pyright's hover provider if you prefer Ruff's hover
+  -- on_attach = function(client, bufnr)
+  --   client.server_capabilities.hoverProvider = false
+  -- end,
+})
+
+
+-- Set diagnostic colors (replace hex codes with your preferred colors)
+vim.api.nvim_set_hl(0, "DiagnosticError", { fg = "#ff6666", bold = true })
+vim.api.nvim_set_hl(0, "DiagnosticWarn",  { fg = "#ffb86c" })
+vim.api.nvim_set_hl(0, "DiagnosticInfo",  { fg = "#8be9fd" })
+vim.api.nvim_set_hl(0, "DiagnosticHint",  { fg = "#50fa7b" })
+
+-- Optional: Underline the text in the buffer where errors occur
+vim.api.nvim_set_hl(0, "DiagnosticUnderlineError", { undercurl = true, sp = "#ff6666" })
+
+
+
+-- 2. Setup Ruff
+-- lspconfig.ruff.setup({})
+
+
+
 
 
 -- Recommended keymaps for LSP actions (customize as needed)
@@ -163,6 +215,7 @@ vim.diagnostic.config({
         prefix = '●',
         spacing = 2,
         severity = {
+           -- min = vim.diagnostic.severity.ERROR -- Only show WARN and ERROR in virtual text
             min = vim.diagnostic.severity.ERROR -- Only show WARN and ERROR in virtual text
         }
     },
@@ -189,3 +242,52 @@ vim.diagnostic.config({
     },
 })
 
+-- origami
+
+require("origami").setup {
+  keepFoldsOnJump = false, 
+	useLspFoldsWithTreesitterFallback = {
+		enabled = true,
+		foldmethodIfNeitherIsAvailable = "indent", ---@type string|fun(bufnr: number): string
+	},
+	pauseFoldsOnSearch = true,
+	foldtext = {
+		enabled = true,
+		padding = {
+			character = " ",
+			width = 3,  ---@type number|fun(win: number, foldstart: number, currentVirtualTextLength: number): number
+			hlgroup = nil,
+		},
+		lineCount = {
+			template = "%d lines", -- `%d` is replaced with the number of folded lines
+			hlgroup = "Comment",
+		},
+		diagnosticsCount = true, -- uses hlgroups and icons from `vim.diagnostic.config().signs`
+		gitsignsCount = true, -- requires `gitsigns.nvim` or `mini.diff`
+		disableOnFt = { "snacks_picker_input" }, ---@type string[]
+	},
+	autoFold = {
+		enabled = true,
+		kinds = { "comment", "imports" }, ---@type lsp.FoldingRangeKind[]
+	},
+	foldKeymaps = {
+		setup = true, -- modifies `h`, `l`, `^`, and `$`
+		closeOnlyOnFirstColumn = false, -- `h` and `^` only fold in the 1st column
+		scrollLeftOnCaret = false, -- `^` should scroll left (basically mapped to `0^`)
+	},
+}
+
+-- more nvim-origami fixes
+-- Enable Treesitter folding for nvim-origami
+
+
+vim.opt.foldlevel = 99
+vim.opt.foldlevelstart = 99
+vim.opt.fillchars = {
+  foldopen = "↓",
+  foldclose = "→",
+  foldsep = " ",
+}
+vim.opt.statuscolumn = "%l%C "
+vim.opt.foldcolumn = "2"
+vim.keymap.set("n", "<leader><CR>", "za", { noremap = true, silent =  true })
