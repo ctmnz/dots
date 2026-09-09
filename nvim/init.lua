@@ -100,6 +100,10 @@ local lsp_servers = {
   pyright = {},
 }
 
+
+-- {"ms-jpq/chadtree", branch = "chad", build = ":CHADdeps"},
+
+
 vim.pack.add({
   "https://github.com/neovim/nvim-lspconfig", -- default configs for lsps
   "https://github.com/mason-org/mason.nvim",                     -- package manager
@@ -107,6 +111,7 @@ vim.pack.add({
   "https://github.com/WhoIsSethDaniel/mason-tool-installer.nvim", -- auto installer
   "https://github.com/nvim-tree/nvim-web-devicons",
   "https://github.com/chrisgrieser/nvim-origami",
+  "https://github.com/ms-jpq/chadtree",
 }, { confirm = false })
 
 require("mason").setup()
@@ -291,3 +296,7 @@ vim.opt.fillchars = {
 vim.opt.statuscolumn = "%l%C "
 vim.opt.foldcolumn = "2"
 vim.keymap.set("n", "<leader><CR>", "za", { noremap = true, silent =  true })
+
+-- CHADtree keys
+vim.keymap.set('n', '<leader>E', '<cmd>CHADopen --always-focus<CR>', { desc = 'Open CHADtree window' })
+vim.keymap.set('n', '<leader>e', '<cmd>CHADopen<CR>', { desc = 'Toggle CHADtree window' })
